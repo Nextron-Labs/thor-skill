@@ -74,14 +74,27 @@ thor64-lite.exe -a Filescan --intense --norescontrol --cross-platform -p <path>
 
 This approximates lab-like behavior but is not equal to full lab scanning.
 
-### No Sigma Scanning
+### Limited Sigma Support
 
-Sigma rules for event log analysis are not available in THOR Lite. If you need:
-- Windows event log analysis with Sigma rules
-- Detection of lateral movement patterns
-- Advanced persistence detection via logs
+**Log-based Sigma** (Windows Eventlogs, log files) is not available in THOR Lite - the Sigma module is disabled and the pre-packaged Sigma rule set is not included.
 
-You need full THOR.
+**Object-based Sigma (v11 only):** THOR Lite v11 *does* support custom Sigma rules that match on THOR object types (processes, services, autoruns, etc.). This is a powerful alternative for writing custom detections.
+
+```yaml
+# Example: Custom Sigma rule for THOR Lite v11
+logsource:
+    product: THOR
+    service: process
+detection:
+    selection:
+        COMMAND|contains: 'mimikatz'
+    condition: selection
+level: critical
+```
+
+See [Sigma Rules - Object-Based](../../custom-signatures/reference/sigma-rules.md#object-based-sigma-v11-only) for details.
+
+If you need the full pre-packaged Sigma rule set for event log analysis, you need full THOR.
 
 ### No Audit Trail (Blocks THOR Lens)
 

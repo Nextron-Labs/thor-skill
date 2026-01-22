@@ -50,7 +50,11 @@ Filename tags determine IOC type. Tag is detected via regex `\Wc2\W` (word bound
 
 ### Sigma Rules
 
-Applied to Windows Eventlogs and log files. By default only `high` and `critical` levels shown.
+**Log-based (v10/v11):** Applied to Windows Eventlogs and log files.
+
+**Object-based (v11 only):** Match on any of 90+ THOR object types - processes, services, autoruns, cron jobs, kernel modules, etc. This enables detection of things that can't be covered by YARA or IOCs. Use `logsource: product: THOR, service: <object type>`.
+
+By default only `high` and `critical` levels shown.
 
 ### STIX v2
 
