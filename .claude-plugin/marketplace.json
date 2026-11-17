@@ -1,0 +1,14 @@
+{
+  "name": "nextron",
+  "owner": { "name": "Nextron Systems" },
+  "metadata": {
+    "description": "Agent skills for Nextron Systems products"
+  },
+  "plugins": [
+    {
+      "name": "thor-skills",
+      "source": "./",
+      "description": "Skills for Nextron's THOR scanner (v10 and v11, full and Lite): scanning, triage, troubleshooting, thor-util, custom signatures, plugins, deployment, THOR Lens."
+    }
+  ]
+}
