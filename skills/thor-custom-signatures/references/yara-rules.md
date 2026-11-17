@@ -35,6 +35,9 @@ Whole-word test on the lowercased file name, separators are any non-alphanumeric
 | 5 | `meta`, `deepscan` | meta | every file: first 2048 bytes (v10) / first 64 KB (v11, hidden `--metarule-scan-limit`) + externals |
 | 6 | none | generic | files selected for deep scan; custom generic rules also on process memory, dumps, DeepDive |
 
+Examples: `incident-feb17.yar` generic, `case-a23-process-rules.yar` process, `custom-meta.yar` meta,
+`redkitten-tasks-keyword.yar` keyword, `incident-feb17-registry.yar` registry, `event-log-rules.yar` log.
+
 Startup log per file: `Adding rule set from <name> as '<type>' type` (custom generic: `as 'default' and 'custom'
 type`). With `--customonly` built-in files named `deepscan`/`peid` still load.
 
@@ -117,7 +120,20 @@ DeepDive drops matches with a score below 30.
   Validate with `yara` 4.5.x, defining every external you use (`-d`), before deploying.
 - v10 builds are compiled with `dotnet` and without `magic` and `cuckoo`; standard modules (`pe`, `math`, `elf`, `time`) are available.
 - Performance: avoid unbounded regexes (`.*`, `\w+` without limits), prefer literal strings and `fullword`, avoid
-  short atoms. Slow rules hit every deep-scanned file.
+  short atoms. Slow rules hit every deep-scanned file. Bound every repetition: `/[a-zA-Z0-9_]{1,20}\.gif/`, not
+  `/\w+\.gif/` (the unbounded form can make YARA crawl on some files).
+
+Workflow for a new rule:
+1. Build strings from the sample (strings, code bytes, PE metadata); a generator such as
+   [yarGen](https://github.com/Neo23x0/yarGen) gives a starting point that still needs manual review.
+2. Give it a unique rule name, a `description` and a `score` that fits its confidence (section 7).
+3. Test with the `yara` 4.5.x binary: it must match the sample, and it must stay silent on a clean system's
+   program and system folders (`C:\Windows`, `C:\Program Files`, `/usr`) to catch false positives early.
+4. Copy it into `custom-signatures/yara/` and check the THOR startup log for `Adding rule set from …` and the
+   absence of `Could not load yara signature file`.
+
+Further reading: [YARA performance guidelines](https://gist.github.com/Neo23x0/e3d4e316d7441d9143c7),
+[How to write simple but sound YARA rules](https://www.nextron-systems.com/2015/02/16/write-simple-sound-yara-rules/).
 
 ## 7. Scoring
 
