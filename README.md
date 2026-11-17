@@ -32,7 +32,7 @@ The Claude Code plugin also ships a `thor-log-analyst` subagent for bulk triage 
 ### Claude Code (plugin)
 
 ```
-/plugin marketplace add NextronSystems/thor-skill
+/plugin marketplace add Nextron-Labs/thor-skill
 /plugin install thor-skills@nextron
 ```
 
@@ -44,7 +44,7 @@ Update later with `/plugin marketplace update nextron`.
 Copy the skill folders into your personal skills directory. Each skill must be a direct child of it:
 
 ```bash
-git clone https://github.com/NextronSystems/thor-skill.git
+git clone https://github.com/Nextron-Labs/thor-skill.git
 mkdir -p ~/.claude/skills
 cp -R thor-skill/skills/* ~/.claude/skills/
 ```

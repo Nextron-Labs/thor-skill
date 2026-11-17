@@ -4,6 +4,6 @@
   "description": "Skills for Nextron's THOR scanner (v10 and v11, full and Lite): build scan commands, triage findings, troubleshoot scans, maintain installs with thor-util, write custom signatures and plugins, deploy at scale, and use THOR Lens.",
   "author": { "name": "Nextron Systems" },
   "homepage": "https://www.nextron-systems.com/thor/",
-  "repository": "https://github.com/NextronSystems/thor-skill",
+  "repository": "https://github.com/Nextron-Labs/thor-skill",
   "keywords": ["thor", "thor-lite", "compromise-assessment", "dfir", "forensics", "yara", "sigma", "ioc", "incident-response"]
 }
