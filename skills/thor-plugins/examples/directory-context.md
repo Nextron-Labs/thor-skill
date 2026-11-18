@@ -10,6 +10,9 @@ normal; three or more in one folder within an hour are worth a look. Native out-
 they are the main false positive source. Run in THOR 11.0.0-rc.3 against test folders: bursts flagged with score
 60 (Warning), single and spread-out crash logs and OOM loops not flagged.
 
+Full plugin with GC-crash and CVE-2026-114938 exposure checks, test fixtures and release builds:
+https://github.com/Nextron-Labs/thor-plugin-jvm-crash-cluster
+
 ## plugin.go
 
 ```go
