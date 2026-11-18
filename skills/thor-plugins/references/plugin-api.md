@@ -108,9 +108,36 @@ r := thorlog.NewReason(
 scanner.AddReason(r)
 ```
 `thorlog.Reason{Score: 50, Message: "…"}` does not compile: there is no `Message` field, and `Score` belongs to the
-embedded `Signature`. On a `Reason` value, `r.Type` is ambiguous (object header vs signature): use `r.Signature.Type`.
-Scoring: element total from all reasons (positive ones weighted 1, 1/2, 1/4 …); Notice from 40, Warning 60, Alert
-81 with at least one subscore >= 76.
+embedded `Signature`. A hand-built `thorlog.Reason{Summary: …, Signature: …}` compiles, but its object type stays
+empty (`"type": ""` in the JSON output): always use `thorlog.NewReason`. On a `Reason` value, `r.Type` is ambiguous
+(object header vs signature): use `r.Signature.Type`.
+
+### How plugin reasons are scored and shown
+
+Sub-scores are **not added up**. THOR sorts the positive sub-scores in descending order and combines them as
+`total = 100 × (1 − Π (1 − sᵢ/100/2ⁱ))`, so each further reason counts half as much as the one before and closes only
+part of the remaining gap to 100. A negative sub-score multiplies the remaining uncertainty by `(1 + |s|/100)`.
+Measured with plugin reasons on THOR 11.0.0-rc.3:
+
+| Plugin sub-scores | Total | Level |
+|---|---|---|
+| 60, 40 | 68 | Warning (not 80) |
+| 60, 40, 20 | 70 | Warning |
+| 40, 40 | 52 | Notice |
+| 50, 50, 50, 50 | 69 | Warning |
+| 75, 75, 75, 75, 75 | 89 | **Warning**: no sub-score >= 76 |
+| 76, 50 | 82 | Alert |
+| 80, 80 | 88 | Alert |
+| 60, -30 | 48 | Notice |
+
+- Levels: Notice from 40, Warning from 60, Alert from 81 **and** at least one sub-score >= 76. Several medium
+  reasons never make an Alert: if a check should alert on its own, give that reason a score of 81 or more. Full
+  formula and other signal sources: `thor-log-analysis` skill, `references/scoring-and-levels.md`.
+- Only reasons with a score > 0 are shown, sorted by score, and only the first 2 by default (`--alert-reason-limit`,
+  `0` = all; unlimited with `--deep`/`--lab`). Hidden reasons still count for the total; the JSON keeps the full
+  number in `reason_count` and adds `issues[] {affected: "/reasons", category: "truncated"}`. Put anything an
+  analyst must see (context, verdicts) into the summary of the plugin's **highest-scoring** reason, not into a
+  separate low-score reason.
 
 ## Post-processing hooks
 

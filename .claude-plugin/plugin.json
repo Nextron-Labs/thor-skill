@@ -1,6 +1,6 @@
 {
   "name": "thor-skills",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Skills for Nextron's THOR scanner (v10 and v11, full and Lite): build scan commands, triage findings, troubleshoot scans, maintain installs with thor-util, write custom signatures and plugins, deploy at scale, and use THOR Lens.",
   "author": { "name": "Nextron Systems" },
   "homepage": "https://www.nextron-systems.com/thor/",

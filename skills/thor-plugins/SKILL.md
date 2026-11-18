@@ -1,10 +1,10 @@
 ---
 name: thor-plugins
-description: Writes, packages, loads and debugs THOR 11 plugins - Go code in a ZIP in the THOR `plugins/` folder, interpreted by yaegi, using the github.com/NextronSystems/thor-plugin API (Init, RegisterActions, AddYaraRule, AddRuleHook, AddPostProcessingHook, Scanner.ScanFile, ScanStructuredData, AddReason, MatchingObject, AssessedObject, thorlog.Assessment, metadata.yml, --plugin-development-mode, --no-plugins). Use when a user wants to parse a file format THOR does not support, add detection logic beyond YARA/Sigma/IOCs, forward or collect findings and samples, replace the removed THOR 10 action feature (--action_command), or sees errors like "Could not compile plugin", "Plugin has no main.Init function" or "plugin requires THOR version". THOR 11 only.
+description: Writes, packages, loads and debugs THOR 11 plugins - Go code in a ZIP in the THOR `plugins/` folder, interpreted by yaegi, using the github.com/NextronSystems/thor-plugin API (Init, RegisterActions, AddYaraRule, AddRuleHook, AddPostProcessingHook, Scanner.ScanFile, ScanStructuredData, AddReason, MatchingObject, AssessedObject, thorlog.Assessment, metadata.yml, --plugin-development-mode, --no-plugins). Use when a user wants to parse a file format THOR does not support, add detection logic beyond YARA/Sigma/IOCs (e.g. correlating a file with its neighbours: several hs_err_pid*.log crash logs in one folder within a short time), forward or collect findings and samples, replace the removed THOR 10 action feature (--action_command), or sees errors like "Could not compile plugin", "Plugin has no main.Init function" or "plugin requires THOR version". THOR 11 only.
 compatibility: THOR 11.0.x incl. THOR Lite 11, all platforms. Not available in THOR 10. Building needs Go only for `go mod vendor` and local compile checks.
 metadata:
   author: Nextron Systems
-  version: "2.0"
+  version: "2.1"
 ---
 
 # THOR plugins (THOR 11)
@@ -26,6 +26,7 @@ in 11 and replaced by plugins). Plugins work in THOR Lite 11.
 | add findings to the element (`AddReason`) | modify elements in post-processing hooks |
 | see every assessed element with score and reasons (`AddPostProcessingHook`) | use `unsafe`, `syscall`, `os/exec`, cgo, `embed`, `iter`, `unique` |
 | use Go stdlib (Go 1.22 API: `net/http`, `crypto/*`, `archive/*`, `encoding/*` …) and vendored pure-Go modules | print to stdout/stderr (discarded) |
+| look at an element's surroundings on disk (`os.ReadDir`, `os.Open` on sibling files): counts, time windows, related files, which YARA and filename IOCs cannot express | run code at scan end (there is no end-of-scan hook: decide inside a hook call) |
 
 ## Structure
 
@@ -71,6 +72,9 @@ examples use `v11.0.0`.
 - `Content` is nil for elements without data (registry, log lines, most objects); process content is sparse
   memory, do not copy it as one stream. `File.Hashes` is nil unless THOR hashed the file. Nil-check both.
 - Hooks can run concurrently (THOR 11 scans multi-threaded): guard shared state (`sync.Mutex`, `sync/atomic`).
+- Directory context: the hook fires once per matching file, so compute per-directory results once and cache them
+  under a mutex (key `filepath.Dir(file.Path)`). Treat a failing `os.ReadDir` as normal: elements inside archives
+  (`/x/a.zip/member`) have paths that do not exist on disk. Correlation is limited to what the hook can list itself.
 - `RegisterActions` works only inside `Init`; later calls are ignored with an Error.
 
 ## Scanner callbacks (rule hooks only, valid during the callback)
@@ -81,7 +85,10 @@ examples use `v11.0.0`.
 - `ScanStructuredData([]thor.KeyValuePair)`: creates a `structured data from plugin` object, checked with filename
   IOCs, keyword YARA rules and Sigma (`category: structured data from plugin`, fields = your keys verbatim).
 - `AddReason(thorlog.NewReason(summary, thorlog.Signature{Score: 70, Type: thorlog.Custom, Class: …, Rulename: …}, nil))`:
-  adds a finding to the element; THOR scores and reports it like any signature match.
+  adds a finding to the element; THOR scores and reports it like any signature match. Sub-scores combine with
+  diminishing returns (60 + 40 = 68, not 80; Alert needs one sub-score >= 76), and only 2 reasons are shown by
+  default: put key context into the highest-scoring reason. Table in
+  [references/plugin-api.md](references/plugin-api.md#how-plugin-reasons-are-scored-and-shown).
 - `Info/Debug/Error(text, "key", value, …)`: keys must be strings, even count, else the line is dropped
   ("Bad log message from plugin").
 
@@ -139,3 +146,5 @@ Plugin log lines appear with the plugin `name` as module. `--no-plugins` disable
 - [examples/defender-quarantine.md](examples/defender-quarantine.md) - decrypt Defender quarantine blobs and rescan.
 - [examples/httpcollector.md](examples/httpcollector.md) - post-processing hook that uploads only scored files, nil-safe.
 - [examples/registry-autoruns.md](examples/registry-autoruns.md) - registry rule trigger and `AddReason` finding.
+- [examples/directory-context.md](examples/directory-context.md) - burst of JVM crash logs: directory listing from a
+  hook, per-directory cache, time-window logic, `AddReason` (run in THOR 11.0.0-rc.3).
